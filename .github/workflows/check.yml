@@ -3,7 +3,12 @@ name: Check F1 Madrid tickets
 on:
   schedule:
     - cron: "*/5 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      test_email:
+        description: "Send a test email instead of checking the page"
+        type: boolean
+        default: false
 
 concurrency:
   group: ticket-check
@@ -28,7 +33,12 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
-        run: python check.py
+        run: |
+          if [[ "${{ inputs.test_email }}" == "true" ]]; then
+            python check.py --test-email
+          else
+            python check.py
+          fi
 
       - name: Commit updated state
         run: |

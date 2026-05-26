@@ -95,6 +95,20 @@ def send_email(subject: str, body: str) -> None:
 
 
 def main() -> int:
+    if "--test-email" in sys.argv:
+        body = (
+            "This is a test email from the F1 Madrid ticket monitor.\n\n"
+            "If you got this, SMTP and GitHub Secrets are wired up correctly.\n"
+            "Real alerts will look like this and include direct buy links."
+        )
+        try:
+            send_email("F1 Madrid monitor — test email", body)
+            print(f"Test email sent to {os.environ.get('NOTIFY_EMAIL')}")
+            return 0
+        except Exception as exc:
+            print(f"ERROR sending test email: {exc}", file=sys.stderr)
+            return 3
+
     try:
         html = fetch_page()
         state = extract_state(html)
