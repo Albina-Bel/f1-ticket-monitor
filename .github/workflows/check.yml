@@ -14,19 +14,26 @@ concurrency:
   group: ticket-check
   cancel-in-progress: false
 
-permissions:
-  contents: write
-
 jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo (anonymous)
+        uses: actions/checkout@v5
+        with:
+          token: ""
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+
+      - name: Restore previous state
+        id: restore-state
+        uses: actions/cache/restore@v4
+        with:
+          path: state.json
+          key: ticket-state
 
       - name: Run availability check
         env:
@@ -40,12 +47,19 @@ jobs:
             python check.py
           fi
 
-      - name: Commit updated state
+      - name: Delete previous cache (so we can overwrite key)
+        if: always() && steps.restore-state.outputs.cache-hit == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [[ -n "$(git status --porcelain state.json)" ]]; then
-            git config user.name  "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add state.json
-            git commit -m "update state [skip ci]"
-            git push
-          fi
+          gh api --method DELETE \
+            -H "Accept: application/vnd.github+json" \
+            /repos/${{ github.repository }}/actions/caches?key=ticket-state \
+            || echo "cache delete failed (non-fatal)"
+
+      - name: Save updated state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: state.json
+          key: ticket-state
