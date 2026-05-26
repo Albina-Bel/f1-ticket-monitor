@@ -18,11 +18,14 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
-      - name: Checkout repo (anonymous)
-        uses: actions/checkout@v5
-        with:
-          token: ""
+      - name: Download script (anonymous raw fetch)
+        run: |
+          curl -fsSL -o check.py \
+            "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/check.py"
+          ls -la check.py
 
       - uses: actions/setup-python@v6
         with:
@@ -33,7 +36,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: state.json
-          key: ticket-state
+          key: ticket-state-placeholder
+          restore-keys: |
+            ticket-state-
 
       - name: Run availability check
         env:
@@ -47,19 +52,9 @@ jobs:
             python check.py
           fi
 
-      - name: Delete previous cache (so we can overwrite key)
-        if: always() && steps.restore-state.outputs.cache-hit == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api --method DELETE \
-            -H "Accept: application/vnd.github+json" \
-            /repos/${{ github.repository }}/actions/caches?key=ticket-state \
-            || echo "cache delete failed (non-fatal)"
-
       - name: Save updated state
-        if: always()
+        if: always() && hashFiles('state.json') != ''
         uses: actions/cache/save@v4
         with:
           path: state.json
-          key: ticket-state
+          key: ticket-state-${{ github.run_id }}-${{ github.run_attempt }}
