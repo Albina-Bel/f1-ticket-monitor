@@ -1,0 +1,16 @@
+{
+  "450963725": {
+    "label": "Standing Area Second Release",
+    "price": 295,
+    "available_tickets": 0,
+    "has_available_tickets": false,
+    "zone": "Entrada General"
+  },
+  "284360367": {
+    "label": "Section 17 Pelouse Final Call",
+    "price": 397,
+    "available_tickets": 0,
+    "has_available_tickets": false,
+    "zone": "Entrada General"
+  }
+}
