@@ -1,5 +1,7 @@
 name: Check F1 Madrid tickets
 
+# Run every 5 minutes (cron syntax). GitHub may delay scheduled events
+# during high load; expect real-world cadence of 5-15 minutes.
 on:
   schedule:
     - cron: "*/5 * * * *"
